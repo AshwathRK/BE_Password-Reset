@@ -6,21 +6,21 @@ const jwt = require('jsonwebtoken');
 
 const handleGetLogin = async (req, res, next) => {
     if (!req.user) {
-        return res.render('login', {
-            title: 'login',
-            pagelink: './signup',
-            page: "SignUp",
-            message: null,
-            error: null
-        });
+        return res.status(401).json(
+            {
+                status: false,
+                message: "Unauthorized user"
+            }
+        )
     }
-    var useremail = req.user.email
+
+    let useremail = req.user.email
     const user = await User.findOne({ email: useremail });
-    return res.render("userProfile",
-        {
-            title: 'User Profile',
-            userDetails: user
-        });
+    return res.status(200).json({
+        status: true,
+        message: "authorized user",
+        user
+    })
 }
 
 const handlePostLogin = async (req, res, next) => {
@@ -29,35 +29,27 @@ const handlePostLogin = async (req, res, next) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).render('login', {
-                title: 'Login',
-                pagelink: './signup',
-                page: "SignUp",
-                message: null,
-                error: "Email and password are required."
+            return res.status(400).json({
+                status: false,
+                message: "The email and password required"
             });
+
         }
 
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(401).render('login', {
-                title: 'Login',
-                pagelink: './signup',
-                page: "SignUp",
-                message: null,
-                error: "Invalid email or password."
-            });
+            return res.status(401).json({
+                status: false,
+                message: "The user not exit"
+            })
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).render('login', {
-                title: 'Login',
-                pagelink: './signup',
-                page: "SignUp",
-                message: null,
-                error: "Invalid email or password."
-            });
+            return res.status(401).json({
+                status: false,
+                message: "Incorrect password"
+            })
         }
 
         const { accessToken, refreshToken } = generateTokens(
@@ -66,6 +58,7 @@ const handlePostLogin = async (req, res, next) => {
         );
 
         return res
+            .status(200)
             .cookie('accessToken', accessToken, {
                 httpOnly: true,
                 secure: true,
@@ -82,121 +75,132 @@ const handlePostLogin = async (req, res, next) => {
                 httpOnly: false,
                 sameSite: 'Strict',
             })
-            .render("userProfile",
-                {
-                    title: 'User Profile',
-                    userDetails: user
-                });
+            .json({
+                status: true,
+                message: "The user loged in successfully"
+            })
 
     } catch (error) {
-        console.error("Login error:", error);
+        // console.error("Login error:", error);
         if (!res.headersSent) {
-            return res.status(500).render('login', {
-                title: 'Login',
-                pagelink: './signup',
-                page: "SignUp",
-                message: null,
-                error: "An error occurred during login."
-            });
+            return res.status(500).json({
+                status: false,
+                message: "Something went wrong!"
+            })
         }
     }
 };
 
-const handleGetSignUp = (req, res, next) => {
+const handleGetSignUp = async (req, res, next) => {
     if (!req.user) {
-        return res.render('signup', {
-            title: 'signup',
-            pagelink: './',
-            page: "Login",
-            message: null,
-            error: null
-        });
+        return res.status(401).json(
+            {
+                status: false,
+                message: "Unauthorized user"
+            }
+        )
     }
-    return res.render("userProfile",
-        {
-            title: 'User Profile',
-            userDetails: user
-        });
-
+    let useremail = req.user.email
+    const user = await User.findOne({ email: useremail });
+    return res.status(200).json({
+        status: true,
+        message: "authorized user",
+        user
+    })
 };
 
 const handlePostSignUp = async (req, res, next) => {
-
-    debugger
     try {
-        const { fullname, email, dob, gender, password, confirmpassword } = req.body;
-        if (!fullname || !email || !password || !dob || !gender || !confirmpassword) {
+        const {
+            fullname, email, phonenumber, password, confirmpassword,
+            securityQuestion, securityAnswer, dateofbirth,
+            gender, streetaddress, city, State, Postal, Country
+        } = req.body;
 
-            return res.status(400).render('signup', {
-                title: 'SignUp',
-                pagelink: './',
-                page: "Login",
-                message: null,
-                error: "All fields are required."
-            });
+        const requiredFields = { fullname, email, phonenumber, password, confirmpassword, securityQuestion, securityAnswer };
+        for (const [key, value] of Object.entries(requiredFields)) {
+            if (!value) {
+                return res.status(400).json({
+                    status: false,
+                    message: `${key} is required.`
+                });
+            }
         }
 
-        const existingUser = await User.findOne({ email });
+
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
+            return res.status(409).json({
+                status: false,
+                message: "Account already exists. Please log in."
+            });
+        }
 
-            return res.status(400).render('signup', {
-                title: 'SignUp',
-                pagelink: './',
-                page: "Login",
-                message: null,
-                error: "Email is already in use."
+        if (
+            password.length < 12 ||
+            password.length > 14 ||
+            !/[A-Z]/.test(password) ||
+            !/[^a-zA-Z0-9]/.test(password)
+        ) {
+            return res.status(422).json({
+                status: false,
+                message: "Password must be 12-14 characters long, include one uppercase letter and one special character."
             });
         }
-        const matchedpassword = password === confirmpassword
-        if (!matchedpassword) {
-            return res.status(400).render('signup', {
-                title: 'SignUp',
-                pagelink: './',
-                page: "Login",
-                message: null,
-                error: "Please make sure the Password and Confirm Password fields match."
+
+        if (password !== confirmpassword) {
+            return res.status(400).json({
+                status: false,
+                message: "Password and Confirm Password must match."
             });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
-
         const newUser = await User.create({
             fullname,
-            email,
-            dateofbirth: new Date(dob),
-            gender,
-            password: hashedPassword
+            email: email.toLowerCase(),
+            phonenumber,
+            password: hashedPassword,
+            securityQuestion,
+            securityAnswer,
+            dateofbirth: dateofbirth ? new Date(dateofbirth) : null,
+            gender: gender || '',
+            streetaddress: streetaddress || '',
+            city: city || '',
+            State: State || '',
+            Postal: Postal || '',
+            Country: Country || ''
         });
-        return res.render('login', {
-            title: 'login',
-            pagelink: './signup',
-            page: "SignUp",
-            message: null,
-            error: null
+
+        return res.status(200).json({
+            status: true,
+            message: "User registration successful.",
         });
 
     } catch (error) {
-        console.error("Error registering user:", error);
-        return res.status(500).render('signup', {
-            title: 'SignUp',
-            pagelink: './',
-            page: "Login",
-            message: null,
-            error: "An error occurred while registering the user."
+        console.error("Signup error:", error);
+        return res.status(500).json({
+            status: false,
+            message: "An internal server error occurred."
         });
     }
-}
+};
 
 const getUserDetails = async (req, res, next) => {
     if (!req.user) {
-        return res.render('404', { title: '404' })
+        return res.status(404).json({
+            status: false,
+            message: "page not found 404"
+        })
     }
 
     var useremail = req.user.email
     const user = await User.findOne({ email: useremail });
-    return res.render("userProfile",
+    return res.status(200).json(
         {
-            title: 'User Profile',
-            userDetails: user
+            staus: false,
+            message: "The user authenticated",
+            user
         });
 }
 
@@ -204,7 +208,10 @@ const logoutUser = (req, res, next) => {
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
     res.clearCookie('deviceId');
-    res.redirect('/');
+    res.status(200).json(
+        {status: false,
+        message: "The user loged out successfull"}
+    );
 }
 
 module.exports = {

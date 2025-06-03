@@ -5,8 +5,6 @@ const uri = `mongodb+srv://ashwathamanr6:0EqI3qLt4i8f1ix3@cluster0.82ryhpa.mongo
 
 
 mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
 })
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error('MongoDB connection error:', err));
