@@ -77,7 +77,8 @@ const handlePostLogin = async (req, res, next) => {
             })
             .json({
                 status: true,
-                message: "The user loged in successfully"
+                message: "The user loged in successfully",
+                user
             })
 
     } catch (error) {

@@ -4,8 +4,6 @@ const router = express.Router()
 
 
 router.get('/', handleGetLogin);
-   
-router.get('/', handleGetLogin);
 
 router.post('/', handlePostLogin)
 

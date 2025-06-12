@@ -16,7 +16,10 @@ HTTP_Server.use(bodyParser.json());
 HTTP_Server.use(bodyParser.urlencoded({ extended: false }));
 HTTP_Server.use(cookieParser());
 
-HTTP_Server.use(cors());
+HTTP_Server.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true               
+}));
 
 // Load YAML Swagger file
 const swaggerDocument = YAML.load('./docs/swagger.yaml');
