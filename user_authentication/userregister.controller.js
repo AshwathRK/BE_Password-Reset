@@ -118,7 +118,7 @@ const handlePostSignUp = async (req, res, next) => {
             gender, streetaddress, city, State, Postal, Country
         } = req.body;
 
-        const requiredFields = { fullname, email, phonenumber, password, confirmpassword, securityQuestion, securityAnswer };
+        const requiredFields = { fullname, email, password, confirmpassword, securityQuestion, securityAnswer };
         for (const [key, value] of Object.entries(requiredFields)) {
             if (!value) {
                 return res.status(400).json({
