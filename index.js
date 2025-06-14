@@ -18,7 +18,7 @@ HTTP_Server.use(cookieParser());
 
 // ✅ Enable CORS for frontend
 HTTP_Server.use(cors({
-  origin: 'http://localhost:5173', // Your frontend
+  origin: 'https://userpasswordreset.netlify.app/', // Your frontend
   credentials: true
 }));
 
