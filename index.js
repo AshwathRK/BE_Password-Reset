@@ -18,7 +18,7 @@ HTTP_Server.use(cookieParser());
 
 // ✅ Enable CORS for frontend
 HTTP_Server.use(cors({
-  origin: 'https://userpasswordreset.netlify.app/', // Your frontend
+  origin: 'https://userpasswordreset.netlify.app', // Your frontend
   credentials: true
 }));
 
