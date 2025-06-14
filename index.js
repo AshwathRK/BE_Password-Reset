@@ -2,45 +2,41 @@ const express = require('express');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
-const router = require('./Router/router')
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-require('./db');
-const auth = require('./Middleware/auth');
+
+require('./db'); // DB connection
+const router = require('./Router/router');
 
 const HTTP_Server = express();
 
-// ✅ Middleware for static files, parsing JSON/body/cookies
-HTTP_Server.use(express.static('public'));
-HTTP_Server.use(bodyParser.json());
-HTTP_Server.use(bodyParser.urlencoded({ extended: false }));
+// ✅ Parse JSON and URL-encoded data
+HTTP_Server.use(express.json());
+HTTP_Server.use(express.urlencoded({ extended: false }));
+
+// ✅ Parse cookies
 HTTP_Server.use(cookieParser());
 
+// ✅ Enable CORS for frontend
 HTTP_Server.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true               
+  origin: 'http://localhost:5173', // Your frontend
+  credentials: true
 }));
 
-// Load YAML Swagger file
-const swaggerDocument = YAML.load('./docs/swagger.yaml');
+// ✅ Serve static files if needed
+HTTP_Server.use(express.static('public'));
 
-// Serve Swagger UI at /api-docs
+// ✅ Swagger documentation setup
+const swaggerDocument = YAML.load('./docs/swagger.yaml');
 HTTP_Server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// ✅ Connect your API routes
+HTTP_Server.use('/api', router);
 
-// ✅ Auth middleware
-HTTP_Server.use(auth);
-
-//Connection of router
-HTTP_Server.use('/api', router)
-
-
+// ✅ Start server
 HTTP_Server.listen(3000, (error) => {
-    if (error) {
-        console.error(`Error starting server: ${error.message}`);
-        process.exit(1);
-    }
-    console.log('Server is running on port 3000');
-})
-
-
+  if (error) {
+    console.error(`Error starting server: ${error.message}`);
+    process.exit(1);
+  }
+  console.log('✅ Server is running on port 3000');
+});
