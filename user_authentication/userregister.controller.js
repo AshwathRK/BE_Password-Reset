@@ -61,25 +61,28 @@ const handlePostLogin = async (req, res, next) => {
             .status(200)
             .cookie('accessToken', accessToken, {
                 httpOnly: true,
-                secure: true,
-                sameSite: 'Strict',
+                secure: true,            
+                sameSite: 'None',        
                 maxAge: 15 * 60 * 1000,
             })
             .cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'Strict',
+                sameSite: 'None',
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             })
             .cookie('deviceId', deviceId, {
                 httpOnly: false,
-                sameSite: 'Strict',
+                secure: true,
+                sameSite: 'None',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
             })
             .json({
                 status: true,
-                message: "The user loged in successfully",
+                message: "The user logged in successfully",
                 user
-            })
+            });
+
 
     } catch (error) {
         // console.error("Login error:", error);
@@ -210,8 +213,10 @@ const logoutUser = (req, res, next) => {
     res.clearCookie('refreshToken');
     res.clearCookie('deviceId');
     res.status(200).json(
-        {status: false,
-        message: "The user loged out successfull"}
+        {
+            status: false,
+            message: "The user loged out successfull"
+        }
     );
 }
 
